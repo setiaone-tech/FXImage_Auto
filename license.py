@@ -91,7 +91,7 @@ date_frame = ttk.Frame(root)
 date_frame.pack(pady=5)
 
 # Combobox untuk memilih tahun
-year_combobox = ttk.Combobox(date_frame, values=[str(year) for year in range(2000, 2031)], width=10)
+year_combobox = ttk.Combobox(date_frame, values=[str(year) for year in range(2000, 2099)], width=10)
 year_combobox.set(str(datetime.datetime.now().year))  # Set default year to the current year
 year_combobox.pack(side="left", padx=5)
 

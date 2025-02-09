@@ -170,6 +170,10 @@ class App:
         self.output_label.pack(fill='x', padx=20, pady=5)
         self.output_label.config(text="READY")
 
+        # Membuat widget progress bar
+        self.progress_bar = ttk.Progressbar(page, length=400, mode='determinate')
+        self.progress_bar.pack(fill='x', padx=20, pady=5)
+
         Label(page, text="Output Hasil Gambar:").pack(anchor='w', padx=10, pady=2)
         # Frame utama untuk scrollable area (Canvas)
         self.canvas_frame = tk.Frame(page)
@@ -262,6 +266,7 @@ class App:
         self.canvas.config(scrollregion=self.canvas.bbox("all"))  # Update area scrollable
     
     def run_selenium(self):
+        self.progress_bar['value'] = 0
         # Ambil input dari pengguna
         profile_dir = self.chrome_profile.get()
         download_dir = self.download_location.get()
@@ -289,6 +294,7 @@ class App:
             
             # Arahkan ke halaman yang diinginkan (Anda dapat mengubah URL sesuai kebutuhan)
             self.output_label.config(text="Progress")
+            self.progress_bar['value'] += 1
             url = "https://labs.google/fx/tools/image-fx"  # Ganti dengan halaman yang sesuai
             self.driver.get(url)
             
@@ -296,6 +302,7 @@ class App:
             time.sleep(5)
 
             self.output_label.config(text="Opening Browser")
+            self.progress_bar['value'] += 1
             try:
                 # Menunggu elemen dengan XPath pertama untuk muncul dan klik
                 xpath1 = "//div[@id='__next']/div/div/div/div[2]/div[2]/div/span/button/span[2]"
@@ -307,6 +314,7 @@ class App:
             except:
                 pass
             
+            self.progress_bar['value'] += 1
             try:
                 # Tunggu sampai tombol sign-in muncul dan klik tombol tersebut
                 xpath2 = "//button[@id='sign-in-now-button']/span"
@@ -318,6 +326,7 @@ class App:
             except:
                 pass
 
+            self.progress_bar['value'] += 1
             try:
                 # Menunggu sampai elemen div dengan role="textbox" muncul dan klik
                 xpath4 = "//div[@role='textbox']"  # XPath untuk mencari div dengan role="textbox"
@@ -330,20 +339,27 @@ class App:
                 pass
             
             self.output_label.config(text="Getting Prompt")
+            self.progress_bar['value'] += 1
             # Setelah klik, masukkan teks dari prompt ke dalam div yang berperan sebagai textbox
             if prompt:
                 prompts = prompt.split('\n')
+                leng = len(prompts) - 1
+                progress = 95 / (leng*5)
                 for prompt in prompts:
                     if prompt != '':
                         try:
                             self.output_label.config(text=f"Generate Image '{prompt}'")
                             teks = textbox_div.text
+                            self.progress_bar['value'] += progress
                             if teks:
-                                # Mengirimkan backspace untuk menghapus seluruh teks
-                                for _ in range(len(teks)):
-                                    textbox_div.send_keys(Keys.BACKSPACE)
+                                # Pilih seluruh teks di dalam textbox
+                                textbox_div.send_keys(Keys.CONTROL + 'a')  # Untuk Windows/Linux, gunakan CONTROL + 'a' untuk memilih semua teks
+
+                                # Hapus teks yang sudah dipilih
+                                textbox_div.send_keys(Keys.BACKSPACE)
                                 time.sleep(1)  # Memberikan waktu sejenak untuk penghapusan
                             textbox_div.send_keys(prompt)  # Kirimkan teks dari promp
+                            self.progress_bar['value'] += progress
                             try:
                                 # Cari elemen berdasarkan XPath
                                 button_element = self.driver.find_element(By.XPATH, "//div[@id='__next']/div/div/div/div/div[2]/div[2]/div/div/div/div[2]/button/div")
@@ -354,6 +370,7 @@ class App:
                                 pass
 
                             time.sleep(3)
+                            self.progress_bar['value'] += progress
 
                             try:
                                 error_element = self.driver.find_element(By.CSS_SELECTOR, "div.sc-be78401e-2.fluukT")
@@ -369,6 +386,7 @@ class App:
 
 
                             # Periksa apakah ada gambar yang ditemukan
+                            self.progress_bar['value'] += progress
                             max = int(self.jumlah_pict.get())
                             loop = 0
                             if img_elements:
@@ -408,6 +426,8 @@ class App:
                             time.sleep(5)
                         except:
                             pass
+
+                        self.progress_bar['value'] += progress
             
             self.driver.quit()
             self.enable_all()
